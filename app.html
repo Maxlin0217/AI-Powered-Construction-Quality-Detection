@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI 驅動的混凝土與抹灰缺陷檢測系統">
+    <meta name="theme-color" content="#3282b8">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>YOLOv11 智能施工質量檢測</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #0f4c75, #3282b8);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .home-btn {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .home-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-50%) scale(1.05);
+        }
+        
+        .header h1 {
+            font-size: 26px;
+            margin-bottom: 10px;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .phase-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .phase-btn {
+            background: rgba(52, 152, 219, 0.2);
+            border: 2px solid #3498db;
+            padding: 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+        }
+        
+        .phase-btn:hover {
+            background: rgba(52, 152, 219, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .phase-btn.selected {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            border-color: #2980b9;
+        }
+        
+        .phase-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .phase-desc {
+            font-size: 14px;
+            color: #bdc3c7;
+            line-height: 1.5;
+        }
+        
+        .phase-risks {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 13px;
+        }
+        
+        .risk-tag {
+            display: inline-block;
+            background: rgba(231, 76, 60, 0.3);
+            padding: 3px 8px;
+            border-radius: 5px;
+            margin: 3px;
+            font-size: 12px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #3282b8, #0f4c75);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover { transform: translateY(-2px); }
+        .btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        .btn-upload {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+        
+        .btn-detect {
+            background: linear-gradient(135deg, #8e44ad, #9b59b6);
+            margin-top: 15px;
+        }
+        
+        .success {
+            background: rgba(46, 204, 113, 0.2);
+            border: 2px solid #2ecc71;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .warning {
+            background: rgba(241, 196, 15, 0.2);
+            border: 2px solid #f1c40f;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+        }
+        
+        .info {
+            background: rgba(52, 152, 219, 0.2);
+            border: 1px solid #3498db;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .step-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #3282b8;
+        }
+        
+        img, canvas {
+            width: 100%;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .result-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .defect-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .defect-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #3498db;
+        }
+        
+        .badge {
+            background: #3282b8;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        .defect-info {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            line-height: 1.8;
+        }
+        
+        .defect-section {
+            margin-top: 12px;
+        }
+        
+        .defect-section-title {
+            color: #f39c12;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .workflow-guide {
+            background: rgba(46, 204, 113, 0.1);
+            border: 1px solid #2ecc71;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .workflow-step {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .workflow-step:last-child {
+            border-bottom: none;
+        }
+        
+        @media (max-width: 768px) {
+            .home-btn {
+                position: static;
+                transform: none;
+                display: inline-block;
+                margin-bottom: 15px;
+            }
+            
+            .header h1 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="index.html" class="home-btn">🏠 首頁</a>
+            <h1>🎯 YOLOv11 智能施工質量檢測</h1>
+            <p>AI-Powered Construction Quality Detection</p>
+        </div>
+
+        <div id="app">
+            <div class="card">
+                <div style="text-align: center; padding: 20px;">
+                    ⏳ 正在載入系統...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let session = null;
+        let currentImage = null;
+        let selectedPhase = null;
+        
+        const INPUT_SIZE = 640;
+        const CONFIDENCE_THRESHOLD = 0.25;
+        const IOU_THRESHOLD = 0.45;
+        
+        const classNames = [
+            'Crack', 'Efflorescence', 'Rebar', 'Rust', 'Scaling', 'Spall', 'Spallingw',
+            'Hollowing', 'Bad_corner', 'Sandy_surface', 'Honeycomb'
+        ];
+        
+        const classNamesChinese = {
+            'Crack': '裂縫',
+            'Efflorescence': '白華',
+            'Rebar': '鋼筋外露',
+            'Rust': '鏽蝕',
+            'Scaling': '剝落',
+            'Spall': '剝離',
+            'Spallingw': '剝離W型',
+            'Hollowing': '空鼓',
+            'Bad_corner': '陰陽角不順直',
+            'Sandy_surface': '表面粗糙/起砂',
+            'Honeycomb': '蜂窩'
+        };
+        
+        const constructionPhases = {
+            'base': {
+                name: '基層處理',
+                description: '清理基層、澆水濕潤、塗刷界面劑',
+                risks: ['空鼓', '剝離'],
+                checkPoints: [
+                    '基層是否清理乾淨（無浮灰、油污）',
+                    '澆水是否充分（牆面濕潤但不流水）',
+                    '界面劑是否塗刷均勻'
+                ],
+                timing: '施工完成後 7 天檢測'
+            },
+            'datum': {
+                name: '吊垂線、做灰餅',
+                description: '彈線定位、設置灰餅、設置沖筋',
+                risks: ['陰陽角不順直'],
+                checkPoints: [
+                    '彈線是否準確（水平、垂直誤差 < 2mm）',
+                    '灰餅間距是否合理（1.5-2m）',
+                    '沖筋是否平直'
+                ],
+                timing: '施工中即時檢查'
+            },
+            'corner': {
+                name: '護角施工',
+                description: '安裝護角條、加設加強網',
+                risks: ['裂縫', '陰陽角不順直'],
+                checkPoints: [
+                    '護角條是否垂直、牢固',
+                    '交接處是否掛加強網（寬度 ≥ 300mm）',
+                    '加強網是否繃緊、釘固'
+                ],
+                timing: '施工中檢查'
+            },
+            'base_plaster': {
+                name: '底層抹灰',
+                description: '甩漿、抹底灰（5-7mm）',
+                risks: ['空鼓', '裂縫'],
+                checkPoints: [
+                    '甩漿是否充分（覆蓋率 > 60%）',
+                    '厚度是否控制（≤ 9mm/次）',
+                    '是否壓實到位'
+                ],
+                timing: '施工後 7 天檢測空鼓'
+            },
+            'middle_plaster': {
+                name: '中層抹灰',
+                description: '抹中層（8-10mm）、搓平',
+                risks: ['裂縫', '表面粗糙'],
+                checkPoints: [
+                    '底層是否檢查合格',
+                    '厚度是否適當（8-10mm）',
+                    '是否充分搓平'
+                ],
+                timing: '施工後 5 天檢測'
+            },
+            'finish_plaster': {
+                name: '面層抹灰',
+                description: '抹面層（2-3mm）、壓光',
+                risks: ['表面粗糙/起砂', '白華', '色澤不均'],
+                checkPoints: [
+                    '中層是否乾至六七成',
+                    '面層是否薄薄一層（2-3mm）',
+                    '二次壓光是否到位'
+                ],
+                timing: '養護完成後檢測'
+            },
+            'curing': {
+                name: '養護階段',
+                description: '噴水養護，持續 ≥ 7 天',
+                risks: ['裂縫', '起砂', '強度不足'],
+                checkPoints: [
+                    '開始時間是否正確（12-24 小時後）',
+                    '每天噴水次數（2-3 次）',
+                    '養護時間是否充足（≥ 7 天）'
+                ],
+                timing: '養護期間監測'
+            },
+            'final': {
+                name: '成品驗收',
+                description: '全面檢查質量',
+                risks: ['所有缺陷類型'],
+                checkPoints: [
+                    '外觀檢查（裂縫、色澤、平整度）',
+                    '空鼓檢測（全面掃描）',
+                    '強度檢測（回彈儀）'
+                ],
+                timing: '養護完成後（7-14 天）'
+            }
+        };
+        
+        const expertAdvice = {
+            'Crack': {
+                description: '表面細小或明顯的裂縫，可能為乾縮裂縫或結構裂縫',
+                causes: '砂漿配比水泥過多、抹灰太厚未分層、異質材料交接處未加強',
+                solutions: [
+                    '牆根、交接處加設 300mm 寬加強網（鋼絲網或玻纖網）',
+                    '嚴格執行分層抹灰，單層厚度 < 9mm',
+                    '重要裂縫進行結構評估'
+                ],
+                prevention: '交接處掛網、嚴格控制厚度、充分養護'
+            },
+            'Hollowing': {
+                description: '牆面局部鼓起、龜裂，嚴重時出現塊狀脫落',
+                causes: '基層清理不淨（浮灰、油污）、未提前澆水濕潤、甩漿強度不足',
+                solutions: [
+                    '敲除空鼓區域，徹底清理基層',
+                    '刷一道含建築膠的素水泥漿',
+                    '重新分層抹灰並壓實'
+                ],
+                prevention: '基層清理徹底、澆水充分、甩漿到位、壓實充分'
+            },
+            'Bad_corner': {
+                description: '牆角邊線不直、歪斜，用方尺檢查不方正',
+                causes: '未做灰餅、沖筋找規矩、未使用專用陰陽角抹子、未掛線定位',
+                solutions: [
+                    '抹灰前必須彈十字線、做灰餅',
+                    '使用長靠尺與專用抹子上下抽平',
+                    '嚴重變形需重新施作'
+                ],
+                prevention: '精確放線、灰餅沖筋到位、使用專用工具'
+            },
+            'Sandy_surface': {
+                description: '牆面色澤不均、接槎明顯，表面鬆散易掉砂',
+                causes: '養護不足失水過快、使用過時灰、壓光時間不當',
+                solutions: [
+                    '抹灰後 12 小時內開始噴水養護，持續 7 天',
+                    '嚴禁使用超過 3 小時的「過時灰」',
+                    '嚴重區域需鏟除重做'
+                ],
+                prevention: '壓光時機正確、充分養護、禁用過時灰'
+            },
+            'Efflorescence': {
+                description: '牆面出現白色結晶物（鹽析現象）',
+                causes: '水泥或砂中含可溶性鹽類、養護期過度潮濕',
+                solutions: [
+                    '用稀鹽酸清洗並充分沖水',
+                    '重做時選用低鹼水泥',
+                    '加強防水措施'
+                ],
+                prevention: '選用低鹼水泥、控制養護濕度、做好防水'
+            },
+            'Rebar': {
+                description: '鋼筋外露，保護層不足',
+                causes: '保護層厚度不足、混凝土剝落',
+                solutions: [
+                    '清理鏽蝕，塗刷防鏽劑',
+                    '使用高強度修補砂漿修復',
+                    '嚴重時需結構補強'
+                ],
+                prevention: '確保保護層厚度、做好防水'
+            },
+            'Rust': {
+                description: '鋼筋鏽蝕，表面出現鏽斑',
+                causes: '保護層破損、長期潮濕環境',
+                solutions: [
+                    '清除鏽蝕至金屬光澤',
+                    '塗刷防鏽底漆',
+                    '修復保護層並防水'
+                ],
+                prevention: '保護層完整、防水到位、定期檢查'
+            },
+            'Scaling': {
+                description: '表面層狀剝落',
+                causes: '基層處理不當、材料配比問題',
+                solutions: [
+                    '清除剝落部位',
+                    '重新施作並加強養護',
+                    '檢查材料品質'
+                ],
+                prevention: '基層處理到位、材料配比準確'
+            },
+            'Spall': {
+                description: '混凝土塊狀剝離',
+                causes: '凍融損害、鋼筋鏽脹、衝擊損傷',
+                solutions: [
+                    '評估結構安全',
+                    '使用聚合物砂漿修補',
+                    '必要時進行結構補強'
+                ],
+                prevention: '防凍融、防鏽蝕、避免衝擊'
+            },
+            'Spallingw': {
+                description: 'W型剝離破損',
+                causes: '應力集中、材料劣化',
+                solutions: [
+                    '專業結構評估',
+                    '按規範進行修復',
+                    '監測後續發展'
+                ],
+                prevention: '結構設計合理、材料品質優良'
+            },
+            'Honeycomb': {
+                description: '表面呈現蜂窩狀孔洞',
+                causes: '振搗不實、漏振、配比不當',
+                solutions: [
+                    '評估深度和範圍',
+                    '使用高流動性修補料填充',
+                    '嚴重時需鑿除重做'
+                ],
+                prevention: '充分振搗、配比準確、施工規範'
+            }
+        };
+        
+        function tryLoadORT() {
+            const localScript = document.createElement('script');
+            localScript.src = './ort.min.js';
+            localScript.onload = () => {
+                console.log('✅ 本地載入 ONNX Runtime');
+                checkORT();
+            };
+            localScript.onerror = () => {
+                console.log('本地檔案不存在，嘗試 CDN...');
+                tryLoadFromCDN();
+            };
+            document.head.appendChild(localScript);
+        }
+        
+        function tryLoadFromCDN() {
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/onnxruntime-web@1.19.2/dist/ort.min.js';
+            script.onload = () => {
+                console.log('✅ CDN 載入 ONNX Runtime');
+                checkORT();
+            };
+            script.onerror = () => {
+                console.error('❌ CDN 載入失敗');
+                showOfflineInstructions();
+            };
+            document.head.appendChild(script);
+        }
+        
+        function checkORT() {
+            if (typeof ort !== 'undefined') {
+                console.log('✅ ONNX Runtime 準備就緒');
+                autoLoadModel();
+            } else {
+                setTimeout(checkORT, 100);
+            }
+        }
+        
+        function showOfflineInstructions() {
+            document.getElementById('app').innerHTML = `
+                <div class="warning">
+                    ⚠️ 無法載入 ONNX Runtime<br>
+                    <small>請確保通過 HTTP 伺服器訪問（http://localhost:8000）</small>
+                </div>
+                <div class="card">
+                    <button class="btn" onclick="location.reload()">🔄 重新載入</button>
+                </div>
+            `;
+        }
+        
+        async function autoLoadModel() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="card">
+                    <div style="text-align: center; padding: 20px;">
+                        ⏳ 正在自動載入 YOLO 模型...<br>
+                        <small style="color: #bdc3c7; margin-top: 10px; display: block;">載入 best.onnx</small>
+                    </div>
+                </div>
+            `;
+            
+            try {
+                const response = await fetch('best.onnx');
+                if (!response.ok) {
+                    throw new Error('模型檔案不存在');
+                }
+                
+                const arrayBuffer = await response.arrayBuffer();
+                session = await ort.InferenceSession.create(arrayBuffer);
+                
+                console.log('✅ 模型自動載入成功');
+                showPhaseSelection();
+            } catch (err) {
+                console.error('自動載入失敗:', err);
+                showManualUpload();
+            }
+        }
+        
+        function showManualUpload() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="warning">⚠️ 無法自動載入模型</div>
+                <div class="card">
+                    <div class="step-title">⚡ 請手動上傳模型</div>
+                    <button class="btn btn-upload" onclick="selectModel()">📤 選擇模型檔案 (.onnx)</button>
+                    <input type="file" id="modelInput" accept=".onnx" onchange="loadModel(this)">
+                    <div class="info">
+                        💡 請上傳 best.onnx 模型檔案
+                    </div>
+                </div>
+            `;
+        }
+        
+        function selectModel() {
+            document.getElementById('modelInput').click();
+        }
+        
+        async function loadModel(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const app = document.getElementById('app');
+            app.innerHTML = '<div class="card"><div style="text-align: center; padding: 20px;">⏳ 載入模型中...</div></div>';
+            
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                session = await ort.InferenceSession.create(arrayBuffer);
+                
+                console.log('✅ 模型載入成功');
+                showPhaseSelection();
+            } catch (err) {
+                console.error('模型載入錯誤:', err);
+                app.innerHTML = `
+                    <div class="warning">❌ 模型載入失敗：${err.message}</div>
+                    <div class="card">
+                        <button class="btn" onclick="showManualUpload()">🔄 重試</button>
+                    </div>
+                `;
+            }
+        }
+        
+        function showPhaseSelection() {
+            const app = document.getElementById('app');
+            
+            let phasesHTML = '';
+            for (const [key, phase] of Object.entries(constructionPhases)) {
+                const risksHTML = phase.risks.map(risk => 
+                    `<span class="risk-tag">${risk}</span>`
+                ).join('');
+                
+                phasesHTML += `
+                    <div class="phase-btn" onclick="selectPhase('${key}')">
+                        <div class="phase-title">${phase.name}</div>
+                        <div class="phase-desc">${phase.description}</div>
+                        <div class="phase-risks">
+                            <strong>常見風險：</strong><br>
+                            ${risksHTML}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            app.innerHTML = `
+                <div class="success">✅ ONNX Runtime 已就緒</div>
+                <div class="card">
+                    <div class="step-title">⚡ 步驟 1：選擇施工階段</div>
+                    <p style="margin-bottom: 20px; color: #bdc3c7;">
+                        選擇當前施工階段，系統將提供針對性的檢測建議
+                    </p>
+                    <div class="phase-selector">
+                        ${phasesHTML}
+                    </div>
+                    <button class="btn" onclick="skipPhaseSelection()" style="margin-top: 20px; background: #555;">
+                        ⏭️ 跳過（通用檢測）
+                    </button>
+                </div>
+            `;
+        }
+        
+        function selectPhase(phaseKey) {
+            selectedPhase = phaseKey;
+            const phase = constructionPhases[phaseKey];
+            
+            document.querySelectorAll('.phase-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            
+            setTimeout(() => showImageUpload(), 500);
+        }
+        
+        function skipPhaseSelection() {
+            selectedPhase = null;
+            showImageUpload();
+        }
+        
+        function showImageUpload() {
+            const app = document.getElementById('app');
+            
+            let phaseWarning = '';
+            if (selectedPhase) {
+                const phase = constructionPhases[selectedPhase];
+                const risksHTML = phase.risks.join('、');
+                
+                phaseWarning = `
+                    <div class="warning">
+                        <strong>⚠️ 本階段重點檢測：</strong><br>
+                        ${risksHTML}
+                    </div>
+                `;
+            }
+            
+            app.innerHTML = `
+                <div class="success">✅ 系統已就緒</div>
+                ${phaseWarning}
+                <div class="card">
+                    <div class="step-title">📸 步驟 2：上傳施工照片</div>
+                    <button class="btn btn-upload" onclick="selectImage()">📷 選擇照片</button>
+                    <input type="file" id="imageInput" accept="image/*" onchange="loadImage(this)">
+                </div>
+            `;
+        }
+        
+        function selectImage() {
+            document.getElementById('imageInput').click();
+        }
+        
+        function loadImage(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentImage = e.target.result;
+                showImagePreview();
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function showImagePreview() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="success">✅ 準備就緒</div>
+                <div class="card">
+                    <img src="${currentImage}">
+                    <button class="btn btn-detect" onclick="runDetection()">🎯 開始 YOLO 推理</button>
+                    <button class="btn" onclick="showImageUpload()" style="margin-top: 10px; background: #555;">📷 重選照片</button>
+                </div>
+            `;
+        }
+        
+        async function runDetection() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = '⏳ YOLO 推理中...';
+            
+            try {
+                const img = new Image();
+                img.src = currentImage;
+                await new Promise(resolve => img.onload = resolve);
+                
+                const input = await preprocessImage(img);
+                const feeds = {};
+                feeds[session.inputNames[0]] = input;
+                
+                const results = await session.run(feeds);
+                const detections = postprocess(results[session.outputNames[0]], img.width, img.height);
+                
+                console.log('🎯 檢測到', detections.length, '個缺陷');
+                
+                showResults(img, detections);
+            } catch (err) {
+                console.error('推理錯誤:', err);
+                document.getElementById('app').innerHTML = `
+                    <div class="warning">❌ 推理失敗：${err.message}</div>
+                    <div class="card">
+                        <button class="btn" onclick="showImagePreview()">🔄 重試</button>
+                    </div>
+                `;
+            }
+        }
+        
+        async function preprocessImage(img) {
+            const canvas = document.createElement('canvas');
+            canvas.width = INPUT_SIZE;
+            canvas.height = INPUT_SIZE;
+            const ctx = canvas.getContext('2d');
+            
+            const scale = Math.min(INPUT_SIZE / img.width, INPUT_SIZE / img.height);
+            const scaledWidth = img.width * scale;
+            const scaledHeight = img.height * scale;
+            const x = (INPUT_SIZE - scaledWidth) / 2;
+            const y = (INPUT_SIZE - scaledHeight) / 2;
+            
+            ctx.fillStyle = '#114';
+            ctx.fillRect(0, 0, INPUT_SIZE, INPUT_SIZE);
+            ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+            
+            const imageData = ctx.getImageData(0, 0, INPUT_SIZE, INPUT_SIZE);
+            const pixels = imageData.data;
+            
+            const red = [], green = [], blue = [];
+            for (let i = 0; i < pixels.length; i += 4) {
+                red.push(pixels[i] / 255);
+                green.push(pixels[i + 1] / 255);
+                blue.push(pixels[i + 2] / 255);
+            }
+            
+            const input = Float32Array.from([...red, ...green, ...blue]);
+            return new ort.Tensor('float32', input, [1, 3, INPUT_SIZE, INPUT_SIZE]);
+        }
+        
+        function postprocess(output, imgWidth, imgHeight) {
+            const data = output.data;
+            const dims = output.dims;
+            
+            const numClasses = classNames.length;
+            const numBoxes = dims[2] || dims[1];
+            
+            const boxes = [];
+            const scale = Math.min(INPUT_SIZE / imgWidth, INPUT_SIZE / imgHeight);
+            
+            for (let i = 0; i < numBoxes; i++) {
+                let maxScore = 0;
+                let maxClass = 0;
+                
+                for (let c = 0; c < numClasses; c++) {
+                    const score = data[i + (4 + c) * numBoxes];
+                    if (score > maxScore) {
+                        maxScore = score;
+                        maxClass = c;
+                    }
+                }
+                
+                if (maxScore < CONFIDENCE_THRESHOLD) continue;
+                
+                const x = data[i];
+                const y = data[i + numBoxes];
+                const w = data[i + 2 * numBoxes];
+                const h = data[i + 3 * numBoxes];
+                
+                const x1 = ((x - w / 2) - (INPUT_SIZE - imgWidth * scale) / 2) / scale;
+                const y1 = ((y - h / 2) - (INPUT_SIZE - imgHeight * scale) / 2) / scale;
+                const x2 = ((x + w / 2) - (INPUT_SIZE - imgWidth * scale) / 2) / scale;
+                const y2 = ((y + h / 2) - (INPUT_SIZE - imgHeight * scale) / 2) / scale;
+                
+                boxes.push({
+                    x1, y1, x2, y2,
+                    score: maxScore,
+                    class: maxClass,
+                    className: classNames[maxClass],
+                    chineseName: classNamesChinese[classNames[maxClass]]
+                });
+            }
+            
+            return nms(boxes, IOU_THRESHOLD);
+        }
+        
+        function nms(boxes, iouThreshold) {
+            boxes.sort((a, b) => b.score - a.score);
+            
+            const keep = [];
+            while (boxes.length > 0) {
+                keep.push(boxes[0]);
+                boxes = boxes.slice(1).filter(box => {
+                    const iou = calculateIOU(keep[keep.length - 1], box);
+                    return iou < iouThreshold;
+                });
+            }
+            
+            return keep;
+        }
+        
+        function calculateIOU(box1, box2) {
+            const x1 = Math.max(box1.x1, box2.x1);
+            const y1 = Math.max(box1.y1, box2.y1);
+            const x2 = Math.min(box1.x2, box2.x2);
+            const y2 = Math.min(box1.y2, box2.y2);
+            
+            const intersection = Math.max(0, x2 - x1) * Math.max(0, y2 - y1);
+            const area1 = (box1.x2 - box1.x1) * (box1.y2 - box1.y1);
+            const area2 = (box2.x2 - box2.x1) * (box2.y2 - box2.y1);
+            const union = area1 + area2 - intersection;
+            
+            return intersection / union;
+        }
+        
+        function showResults(img, detections) {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.drawImage(img, 0, 0);
+            
+            const colors = ['#e74c3c', '#3498db', '#f39c12', '#2ecc71', '#9b59b6', '#1abc9c', '#e67e22', '#95a5a6', '#34495e', '#16a085', '#d35400'];
+            
+            detections.forEach((det) => {
+                const color = colors[det.class % colors.length];
+                
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 4;
+                ctx.strokeRect(det.x1, det.y1, det.x2 - det.x1, det.y2 - det.y1);
+                
+                ctx.fillStyle = color;
+                const label = `${det.chineseName} ${(det.score * 100).toFixed(1)}%`;
+                ctx.font = 'bold 20px Arial';
+                const textWidth = ctx.measureText(label).width;
+                ctx.fillRect(det.x1, det.y1 - 35, textWidth + 20, 35);
+                
+                ctx.fillStyle = 'white';
+                ctx.fillText(label, det.x1 + 10, det.y1 - 10);
+            });
+            
+            const resultHTML = detections.map(det => {
+                const advice = expertAdvice[det.className] || {
+                    description: '缺陷描述暫無',
+                    causes: '原因分析中',
+                    solutions: ['請諮詢專業人員'],
+                    prevention: '預防措施待補充'
+                };
+                
+                return `
+                    <div class="result-item">
+                        <div class="defect-header">
+                            <div class="defect-name">${det.chineseName}</div>
+                            <span class="badge">信心度: ${(det.score * 100).toFixed(1)}%</span>
+                        </div>
+                        
+                        <div style="color: #bdc3c7; font-size: 14px; margin-top: 8px;">
+                            📍 位置: (${Math.round(det.x1)}, ${Math.round(det.y1)}) → (${Math.round(det.x2)}, ${Math.round(det.y2)})
+                        </div>
+                        
+                        <div class="defect-info">
+                            <div class="defect-section">
+                                <div class="defect-section-title">🔍 缺陷描述：</div>
+                                ${advice.description}
+                            </div>
+                            
+                            <div class="defect-section">
+                                <div class="defect-section-title">⚠️ 可能原因：</div>
+                                ${advice.causes}
+                            </div>
+                            
+                            <div class="defect-section">
+                                <div class="defect-section-title">✅ 修復建議：</div>
+                                ${advice.solutions.map((s, i) => `${i + 1}. ${s}`).join('<br>')}
+                            </div>
+                            
+                            <div class="defect-section">
+                                <div class="defect-section-title">🛡️ 預防措施：</div>
+                                ${advice.prevention}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            let phaseAnalysis = '';
+            if (selectedPhase && detections.length > 0) {
+                const phase = constructionPhases[selectedPhase];
+                const detectedRisks = detections.map(d => d.chineseName);
+                const expectedRisks = phase.risks;
+                const unexpected = detectedRisks.filter(r => !expectedRisks.includes(r));
+                
+                if (unexpected.length > 0) {
+                    phaseAnalysis = `
+                        <div class="warning">
+                            <strong>⚠️ 異常發現：</strong><br>
+                            檢測到不屬於本階段常見的缺陷：${unexpected.join('、')}<br>
+                            <small>建議：檢查前序施工是否存在問題，或考慮是否選錯施工階段</small>
+                        </div>
+                    `;
+                }
+            }
+            
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="success">
+                    ✅ YOLO 推理完成！檢測到 ${detections.length} 個缺陷
+                </div>
+                ${phaseAnalysis}
+                <div class="card">
+                    <canvas id="resultCanvas" width="${canvas.width}" height="${canvas.height}"></canvas>
+                    ${detections.length > 0 ? `
+                        <div style="margin-top: 20px;">
+                            <h3 style="margin-bottom: 15px;">📊 檢測結果與專家建議：</h3>
+                            ${resultHTML}
+                        </div>
+                    ` : '<p style="text-align: center; padding: 20px;">✅ 未檢測到缺陷</p>'}
+                    <button class="btn" onclick="showImageUpload()" style="margin-top: 20px;">📷 檢測新照片</button>
+                    <button class="btn" onclick="showPhaseSelection()" style="margin-top: 10px; background: #555;">🔄 重新選擇階段</button>
+                </div>
+            `;
+            
+            const displayCanvas = document.getElementById('resultCanvas');
+            displayCanvas.getContext('2d').drawImage(canvas, 0, 0);
+        }
+        
+        window.addEventListener('load', function() {
+            console.log('開始載入系統...');
+            tryLoadORT();
+        });
+    </script>
+</body>
+</html>
