@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="上好牌砂漿 AI 智能施工質量檢測系統">
+    <meta name="theme-color" content="#ED1C24">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>上好牌施工智能檢測</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft JhengHei", "微軟正黑體", Arial, sans-serif;
+        }
+        
+        body {
+            background: #e8e8e8;
+            min-height: 100vh;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        
+        /* 包裝袋主容器 */
+        .package-container {
+            max-width: 500px;
+            margin: 20px auto;
+            background: white;
+            position: relative;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.3),
+                inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        /* 包裝袋頂部封口 */
+        .package-top {
+            background: linear-gradient(to bottom, #f5f5f5 0%, white 100%);
+            padding: 15px 20px 10px;
+            position: relative;
+            border-bottom: 2px solid #ddd;
+        }
+        
+        .package-top::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: repeating-linear-gradient(
+                90deg,
+                #ddd 0px,
+                #ddd 10px,
+                transparent 10px,
+                transparent 20px
+            );
+        }
+        
+        /* 頂部紅色標語 - 毛筆書法字體 */
+        .top-slogan {
+            text-align: right;
+            color: #ED1C24;
+            font-size: 20px;
+            font-weight: 900;
+            letter-spacing: 5px;
+            transform: rotate(-2deg);
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            font-family: "DFKai-SB", "標楷體", "BiauKai", "Kaiti TC", "KaiTi", "楷体", cursive, serif;
+        }
+        
+        /* 導航按鈕 */
+        .nav-overlay {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 999;
+            display: flex;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px;
+            border-radius: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .nav-btn, .lang-btn {
+            background: white;
+            border: 2px solid #ED1C24;
+            color: #ED1C24;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .nav-btn:hover, .lang-btn:hover {
+            background: #ED1C24;
+            color: white;
+        }
+        
+        .lang-btn.active {
+            background: #ED1C24;
+            color: white;
+        }
+        
+        /* Logo區域 - 白色背景 */
+        .brand-section {
+            background: white;
+            padding: 40px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .corner-logo {
+            display: none;
+        }
+        
+        /* 中央Logo框 */
+        .brand-box {
+            background: white;
+            margin: 0 auto;
+            max-width: 320px;
+            border-radius: 3px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .brand-chinese {
+            font-size: 56px;
+            font-weight: 900;
+            color: white;
+            letter-spacing: 8px;
+            line-height: 1;
+            margin: 0;
+            padding: 35px 20px 20px;
+            background: #ED1C24;
+        }
+        
+        .brand-divider {
+            width: 100%;
+            height: 4px;
+            background: #ED1C24;
+            margin: 0;
+        }
+        
+        .brand-english {
+            font-size: 32px;
+            font-weight: bold;
+            color: #1a1a1a;
+            letter-spacing: 10px;
+            line-height: 1;
+            margin: 0;
+            padding: 20px 20px 30px;
+            background: white;
+        }
+        
+        /* 側邊條紋 */
+        .side-stripe-left,
+        .side-stripe-right {
+            position: absolute;
+            top: 0;
+            width: 25px;
+            height: 100%;
+            background: linear-gradient(to right, 
+                rgba(0, 0, 0, 0.05) 0%,
+                transparent 50%,
+                rgba(0, 0, 0, 0.02) 100%
+            );
+        }
+        
+        .side-stripe-left {
+            left: 0;
+        }
+        
+        .side-stripe-right {
+            right: 0;
+            background: linear-gradient(to left, 
+                rgba(0, 0, 0, 0.05) 0%,
+                transparent 50%,
+                rgba(0, 0, 0, 0.02) 100%
+            );
+        }
+        
+        /* 黑色產品名稱區 */
+        .product-name-section {
+            background: #2b2b2b;
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .product-main-title {
+            font-size: 36px;
+            font-weight: 900;
+            color: white;
+            letter-spacing: 12px;
+            margin-bottom: 8px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .product-sub-title {
+            font-size: 22px;
+            font-weight: bold;
+            color: white;
+            letter-spacing: 6px;
+            opacity: 0.95;
+        }
+        
+        /* 產品規格區 */
+        .specs-section {
+            background: white;
+            padding: 30px 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+        }
+        
+        .specs-cert {
+            font-size: 13px;
+            color: #666;
+            line-height: 2;
+            margin-top: 5px;
+        }
+        
+        /* 產品照片展示 */
+        .product-display {
+            background: linear-gradient(135deg, #f9f9f9 0%, #e8e8e8 100%);
+            padding: 40px 20px;
+            text-align: center;
+        }
+        
+        .product-image {
+            max-width: 180px;
+            height: auto;
+            filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.3));
+            transition: transform 0.3s;
+        }
+        
+        .product-image:hover {
+            transform: scale(1.05) rotate(2deg);
+        }
+        
+        /* 內容區域 */
+        .content-area {
+            padding: 30px 20px;
+            background: white;
+        }
+        
+        .card {
+            background: #fafafa;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .card-highlight {
+            border-color: #ED1C24;
+            border-width: 3px;
+            background: white;
+        }
+        
+        .phase-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .phase-btn {
+            background: white;
+            border: 2px solid #ED1C24;
+            padding: 18px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .phase-btn:hover {
+            background: #fff5f5;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(237, 28, 36, 0.25);
+        }
+        
+        .phase-btn.selected {
+            background: #ED1C24;
+            color: white;
+            box-shadow: 0 6px 20px rgba(237, 28, 36, 0.4);
+        }
+        
+        .phase-title {
+            font-size: 17px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .phase-desc {
+            font-size: 13px;
+            line-height: 1.4;
+            opacity: 0.85;
+        }
+        
+        .phase-risks {
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            font-size: 12px;
+        }
+        
+        .phase-btn.selected .phase-risks {
+            border-top-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .risk-tag {
+            display: inline-block;
+            background: #2b2b2b;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 3px;
+            margin: 3px;
+            font-size: 11px;
+        }
+        
+        .phase-btn.selected .risk-tag {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn {
+            background: #ED1C24;
+            color: white;
+            border: none;
+            padding: 18px 35px;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+        
+        .btn:hover { 
+            background: #c71820;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(237, 28, 36, 0.4);
+        }
+        
+        .btn:disabled {
+            background: #999;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        .btn-black {
+            background: #2b2b2b;
+        }
+        
+        .btn-black:hover {
+            background: #1a1a1a;
+        }
+        
+        .btn-outline {
+            background: white;
+            color: #ED1C24;
+            border: 3px solid #ED1C24;
+        }
+        
+        .btn-outline:hover {
+            background: #ED1C24;
+            color: white;
+        }
+        
+        .success {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 18px 25px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+        
+        .warning {
+            background: linear-gradient(135deg, #FFC107, #ffb300);
+            color: #333;
+            padding: 18px 25px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+        }
+        
+        .info {
+            background: #f5f5f5;
+            border-left: 5px solid #ED1C24;
+            padding: 18px 25px;
+            margin-top: 20px;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+        
+        .step-title {
+            font-size: 26px;
+            font-weight: 900;
+            margin-bottom: 20px;
+            color: #ED1C24;
+            letter-spacing: 3px;
+            border-left: 6px solid #ED1C24;
+            padding-left: 18px;
+        }
+        
+        img, canvas {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 3px solid #e0e0e0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .result-item {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 6px solid #ED1C24;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+        
+        .defect-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .defect-name {
+            font-size: 24px;
+            font-weight: 900;
+            color: #ED1C24;
+            letter-spacing: 2px;
+        }
+        
+        .badge {
+            background: #2b2b2b;
+            color: white;
+            padding: 8px 18px;
+            border-radius: 5px;
+            font-size: 15px;
+            font-weight: bold;
+        }
+        
+        .defect-info {
+            background: #fafafa;
+            padding: 25px;
+            border-radius: 8px;
+            margin-top: 15px;
+            line-height: 1.9;
+            border: 2px solid #f0f0f0;
+        }
+        
+        .defect-section {
+            margin-top: 18px;
+        }
+        
+        .defect-section-title {
+            color: #ED1C24;
+            font-weight: 900;
+            margin-bottom: 10px;
+            font-size: 17px;
+            letter-spacing: 1px;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        /* 底部包裝封口 */
+        .package-bottom {
+            background: linear-gradient(to top, #f5f5f5 0%, white 100%);
+            padding: 20px;
+            border-top: 2px solid #ddd;
+            position: relative;
+        }
+        
+        .package-bottom::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: repeating-linear-gradient(
+                90deg,
+                #ddd 0px,
+                #ddd 10px,
+                transparent 10px,
+                transparent 20px
+            );
+        }
+        
+        /* Loading 動畫 */
+        .loading {
+            text-align: center;
+            padding: 50px 20px;
+            color: #ED1C24;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .loading::after {
+            content: "⏳";
+            font-size: 56px;
+            display: block;
+            margin-top: 20px;
+            animation: spin 2s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .package-container {
+                margin: 10px;
+                border-radius: 5px;
+            }
+            
+            .nav-overlay {
+                top: 10px;
+                flex-wrap: wrap;
+                justify-content: center;
+                padding: 8px;
+                gap: 8px;
+            }
+            
+            .nav-btn, .lang-btn {
+                font-size: 12px;
+                padding: 6px 15px;
+            }
+            
+            .brand-chinese {
+                font-size: 46px;
+                letter-spacing: 6px;
+            }
+            
+            .brand-english {
+                font-size: 26px;
+                letter-spacing: 8px;
+            }
+            
+            .product-main-title {
+                font-size: 28px;
+                letter-spacing: 8px;
+            }
+            
+            .product-sub-title {
+                font-size: 18px;
+            }
+            
+            .product-image {
+                max-width: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 導航列 - 整合語言切換 -->
+    <div class="nav-overlay">
+        <button class="lang-btn active" onclick="switchLanguage('zh')" id="btn-zh">🇹🇼 中文</button>
+        <button class="lang-btn" onclick="switchLanguage('vi')" id="btn-vi">🇻🇳 Tiếng Việt</button>
+        <a href="https://www.mfgroup.com.tw/product.php?lang=tw&tb=3" class="nav-btn" target="_blank" data-zh="🌐 官網" data-vi="🌐 Website">🌐 官網</a>
+    </div>
+    
+    <!-- 包裝袋主容器 -->
+    <div class="package-container">
+        <!-- 包裝袋頂部封口 -->
+        <div class="package-top">
+            <div class="top-slogan" data-zh="上好厝用上好料" data-vi="Nhà tốt dùng vật liệu tốt">上好厝用上好料</div>
+        </div>
+        
+        <!-- Logo區域 -->
+        <div class="brand-section">
+            <div class="corner-logo">上</div>
+            <div class="side-stripe-left"></div>
+            <div class="side-stripe-right"></div>
+            
+            <div class="brand-box">
+                <div class="brand-chinese">上好牌</div>
+                <div class="brand-divider"></div>
+                <div class="brand-english">SUNHOW</div>
+            </div>
+        </div>
+        
+        <!-- 黑色產品名稱區 -->
+        <div class="product-name-section">
+            <div class="product-main-title" data-zh="施工智能檢測" data-vi="Kiểm Tra Thông Minh">施工智能檢測</div>
+            <div class="product-sub-title" data-zh="AI DETECTION" data-vi="PHÁT HIỆN AI">AI DETECTION</div>
+        </div>
+        
+        <!-- 產品規格區 -->
+        <div class="specs-section">
+            <div class="specs-cert">
+                <span data-zh="ISO 9001認證" data-vi="Chứng nhận ISO 9001">ISO 9001認證</span><br>
+                <span data-zh="CNS認證產品" data-vi="Sản phẩm chứng nhận CNS">CNS認證產品</span><br>
+                <span data-zh="乾拌砂漿專業製造" data-vi="Chuyên sản xuất vữa khô">乾拌砂漿專業製造</span>
+            </div>
+        </div>
+        
+        <!-- 產品展示 -->
+        <div class="product-display">
+            <img src="product.jpg" alt="上好牌砂漿 Sunhow Mortar" class="product-image">
+        </div>
+        
+        <!-- 內容區域 -->
+        <div class="content-area">
+            <div id="app">
+                <div class="card card-highlight">
+                    <div class="loading" data-zh="系統啟動中" data-vi="Hệ thống đang khởi động">系統啟動中</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 底部封口 -->
+        <div class="package-bottom">
+            <div style="text-align: center; color: #666; font-size: 13px; line-height: 1.8;">
+                <strong style="color: #ED1C24; font-size: 16px;">上好牌 SUNHOW</strong><br>
+                <span data-zh="品質保證 · 值得信賴" data-vi="Đảm bảo chất lượng · Đáng tin cậy">品質保證 · 值得信賴</span><br>
+                <span data-zh="施工智能檢測系統" data-vi="Hệ thống kiểm tra thông minh">施工智能檢測系統</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== 語言系統 ==========
+        let currentLang = localStorage.getItem('language') || 'zh';
+        
+        const translations = {
+            zh: {
+                systemStarting: '系統啟動中',
+                systemReady: '系統已就緒',
+                loadingModel: '正在載入 AI 模型',
+                modelLoaded: '模型載入成功',
+                cannotAutoLoad: '無法自動載入模型',
+                manualUpload: '手動上傳模型',
+                selectModel: '選擇 best.onnx',
+                step1: '步驟 1：選擇施工階段',
+                step2: '步驟 2：上傳照片',
+                selectPhoto: '選擇照片',
+                photoLoaded: '照片已載入',
+                startDetection: '開始檢測',
+                detecting: '檢測中...',
+                selectNewPhoto: '重選照片',
+                reselectStage: '重新選擇階段',
+                skip: '跳過（通用檢測）',
+                stageWarning: '本階段重點檢測：',
+                detectionComplete: '檢測完成！發現',
+                defects: '個缺陷',
+                noDefects: '未檢測到缺陷，施工質量良好',
+                resultAndAdvice: '檢測結果與專家建議',
+                defectDescription: '缺陷描述',
+                possibleCauses: '可能原因',
+                repairSuggestions: '修復建議',
+                preventiveMeasures: '預防措施',
+                confidence: '信心度',
+                newDetection: '檢測新照片',
+                commonRisks: '常見風險：',
+                tip: '建議：使用清晰照片，確保缺陷部位清楚可見'
+            },
+            vi: {
+                systemStarting: 'Hệ thống đang khởi động',
+                systemReady: 'Hệ thống đã sẵn sàng',
+                loadingModel: 'Đang tải mô hình AI',
+                modelLoaded: 'Tải mô hình thành công',
+                cannotAutoLoad: 'Không thể tự động tải mô hình',
+                manualUpload: 'Tải lên thủ công',
+                selectModel: 'Chọn best.onnx',
+                step1: 'Bước 1: Chọn giai đoạn thi công',
+                step2: 'Bước 2: Tải ảnh lên',
+                selectPhoto: 'Chọn ảnh',
+                photoLoaded: 'Ảnh đã được tải',
+                startDetection: 'Bắt đầu kiểm tra',
+                detecting: 'Đang kiểm tra...',
+                selectNewPhoto: 'Chọn ảnh khác',
+                reselectStage: 'Chọn lại giai đoạn',
+                skip: 'Bỏ qua (Kiểm tra chung)',
+                stageWarning: 'Trọng tâm kiểm tra giai đoạn này:',
+                detectionComplete: 'Hoàn tất! Phát hiện',
+                defects: 'khuyết điểm',
+                noDefects: 'Không phát hiện khuyết điểm, chất lượng thi công tốt',
+                resultAndAdvice: 'Kết quả kiểm tra & Tư vấn chuyên gia',
+                defectDescription: 'Mô tả khuyết điểm',
+                possibleCauses: 'Nguyên nhân có thể',
+                repairSuggestions: 'Đề xuất sửa chữa',
+                preventiveMeasures: 'Biện pháp phòng ngừa',
+                confidence: 'Độ tin cậy',
+                newDetection: 'Kiểm tra ảnh mới',
+                commonRisks: 'Rủi ro thường gặp:',
+                tip: 'Gợi ý: Sử dụng ảnh rõ nét, đảm bảo vị trí khuyết điểm rõ ràng'
+            }
+        };
+        
+        function switchLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('language', lang);
+            
+            // 更新語言按鈕狀態
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-' + lang).classList.add('active');
+            
+            // 更新所有帶有 data-zh 和 data-vi 的元素
+            document.querySelectorAll('[data-zh]').forEach(el => {
+                if (lang === 'zh') {
+                    el.textContent = el.getAttribute('data-zh');
+                } else {
+                    el.textContent = el.getAttribute('data-vi');
+                }
+            });
+            
+            // 更新頁面標題
+            document.documentElement.lang = lang === 'zh' ? 'zh-TW' : 'vi';
+            
+            // 重新載入當前視圖
+            if (session) {
+                if (currentImage) {
+                    showImagePreview();
+                } else {
+                    showPhaseSelection();
+                }
+            }
+        }
+        
+        function t(key) {
+            return translations[currentLang][key] || key;
+        }
+        
+        // 頁面載入時應用儲存的語言
+        window.addEventListener('DOMContentLoaded', () => {
+            switchLanguage(currentLang);
+        });
+        
+        // ========== YOLO 檢測系統 ==========
+        let session = null;
+        let currentImage = null;
+        let selectedPhase = null;
+        
+        const INPUT_SIZE = 640;
+        const CONFIDENCE_THRESHOLD = 0.25;
+        const IOU_THRESHOLD = 0.45;
+        
+        const classNames = [
+            'Crack', 'Efflorescence', 'Rebar', 'Rust', 'Scaling', 'Spall', 'Spallingw',
+            'Hollowing', 'Bad_corner', 'Sandy_surface', 'Honeycomb'
+        ];
+        
+        const classNamesChinese = {
+            'Crack': '裂縫',
+            'Efflorescence': '白華',
+            'Rebar': '鋼筋外露',
+            'Rust': '鏽蝕',
+            'Scaling': '剝落',
+            'Spall': '剝離',
+            'Spallingw': '剝離W型',
+            'Hollowing': '空鼓',
+            'Bad_corner': '陰陽角不順直',
+            'Sandy_surface': '表面粗糙/起砂',
+            'Honeycomb': '蜂窩'
+        };
+        
+        const classNamesVietnamese = {
+            'Crack': 'Vết nứt',
+            'Efflorescence': 'Phong hóa trắng',
+            'Rebar': 'Thép lộ ra',
+            'Rust': 'Gỉ sét',
+            'Scaling': 'Bong tróc',
+            'Spall': 'Bong vảy',
+            'Spallingw': 'Bong vảy W',
+            'Hollowing': 'Rỗng bên trong',
+            'Bad_corner': 'Góc không thẳng',
+            'Sandy_surface': 'Bề mặt thô/cát',
+            'Honeycomb': 'Tổ ong'
+        };
+        
+        const constructionPhases = {
+            'base': {
+                name: { zh: '基層處理', vi: 'Xử lý nền' },
+                description: { zh: '清理基層、澆水濕潤、塗刷界面劑', vi: 'Làm sạch, làm ẩm, sơn lớp lót' },
+                risks: { zh: ['空鼓', '剝離'], vi: ['Rỗng', 'Bong tróc'] }
+            },
+            'datum': {
+                name: { zh: '吊垂線、做灰餅', vi: 'Đánh dấu & chuẩn bị' },
+                description: { zh: '彈線定位、設置灰餅、設置沖筋', vi: 'Đánh dấu vị trí, đặt mốc' },
+                risks: { zh: ['陰陽角不順直'], vi: ['Góc không thẳng'] }
+            },
+            'corner': {
+                name: { zh: '護角施工', vi: 'Thi công góc' },
+                description: { zh: '安裝護角條、加設加強網', vi: 'Lắp thanh góc, lưới tăng cường' },
+                risks: { zh: ['裂縫', '陰陽角不順直'], vi: ['Vết nứt', 'Góc không thẳng'] }
+            },
+            'base_plaster': {
+                name: { zh: '底層抹灰', vi: 'Trát lớp nền' },
+                description: { zh: '甩漿、抹底灰（5-7mm）', vi: 'Phun vữa, trát nền (5-7mm)' },
+                risks: { zh: ['空鼓', '裂縫'], vi: ['Rỗng', 'Vết nứt'] }
+            },
+            'middle_plaster': {
+                name: { zh: '中層抹灰', vi: 'Trát lớp giữa' },
+                description: { zh: '抹中層（8-10mm）、搓平', vi: 'Trát lớp giữa (8-10mm), làm phẳng' },
+                risks: { zh: ['裂縫', '表面粗糙'], vi: ['Vết nứt', 'Bề mặt thô'] }
+            },
+            'finish_plaster': {
+                name: { zh: '面層抹灰', vi: 'Trát lớp hoàn thiện' },
+                description: { zh: '抹面層（2-3mm）、壓光', vi: 'Trát lớp hoàn thiện (2-3mm), làm nhẵn' },
+                risks: { zh: ['表面粗糙/起砂', '白華'], vi: ['Bề mặt thô/cát', 'Phong hóa'] }
+            },
+            'curing': {
+                name: { zh: '養護階段', vi: 'Giai đoạn bảo dưỡng' },
+                description: { zh: '噴水養護，持續 ≥ 7 天', vi: 'Phun nước bảo dưỡng ≥ 7 ngày' },
+                risks: { zh: ['裂縫', '起砂'], vi: ['Vết nứt', 'Cát'] }
+            },
+            'final': {
+                name: { zh: '成品驗收', vi: 'Nghiệm thu' },
+                description: { zh: '全面檢查質量', vi: 'Kiểm tra toàn diện chất lượng' },
+                risks: { zh: ['所有缺陷類型'], vi: ['Tất cả các loại'] }
+            }
+        };
+        
+        const expertAdvice = {
+            'Crack': {
+                description: { 
+                    zh: '表面細小或明顯的裂縫，可能為乾縮裂縫或結構裂縫',
+                    vi: 'Vết nứt nhỏ hoặc rõ ràng trên bề mặt, có thể là vết nứt co ngót hoặc kết cấu'
+                },
+                causes: {
+                    zh: '砂漿配比水泥過多、抹灰太厚未分層、異質材料交接處未加強',
+                    vi: 'Xi măng quá nhiều, trát quá dày, không gia cố nơi tiếp giáp vật liệu khác'
+                },
+                solutions: {
+                    zh: ['牆根、交接處加設 300mm 寬加強網', '嚴格執行分層抹灰，單層厚度 < 9mm', '使用上好牌專業砂漿'],
+                    vi: ['Thêm lưới tăng cường 300mm tại chân tường', 'Trát từng lớp, mỗi lớp < 9mm', 'Sử dụng vữa Sunhow chuyên nghiệp']
+                },
+                prevention: {
+                    zh: '交接處掛網、嚴格控制厚度、充分養護',
+                    vi: 'Treo lưới nơi tiếp giáp, kiểm soát độ dày, bảo dưỡng đầy đủ'
+                }
+            },
+            'Hollowing': {
+                description: {
+                    zh: '牆面局部鼓起、龜裂，嚴重時出現塊狀脫落',
+                    vi: 'Tường phồng lên cục bộ, nứt rạn, nghiêm trọng có thể bong ra từng mảng'
+                },
+                causes: {
+                    zh: '基層清理不淨、未提前澆水濕潤、甩漿強度不足',
+                    vi: 'Nền không sạch, không tưới ẩm trước, phun vữa không đủ mạnh'
+                },
+                solutions: {
+                    zh: ['敲除空鼓區域，徹底清理基層', '刷一道含建築膠的素水泥漿', '使用上好牌砂漿重新分層抹灰'],
+                    vi: ['Gõ bỏ vùng rỗng, làm sạch nền', 'Quét một lớp xi măng có keo', 'Dùng vữa Sunhow trát lại từng lớp']
+                },
+                prevention: {
+                    zh: '基層清理徹底、澆水充分、甩漿到位',
+                    vi: 'Làm sạch nền kỹ, tưới nước đủ, phun vữa đúng cách'
+                }
+            },
+            'Bad_corner': {
+                description: {
+                    zh: '牆角邊線不直、歪斜，用方尺檢查不方正',
+                    vi: 'Góc tường không thẳng, lệch, kiểm tra bằng thước vuông không vuông góc'
+                },
+                causes: {
+                    zh: '未做灰餅、沖筋找規矩、未使用專用陰陽角抹子',
+                    vi: 'Không đánh mốc chuẩn, không dùng dụng cụ chuyên dụng cho góc'
+                },
+                solutions: {
+                    zh: ['抹灰前必須彈十字線、做灰餅', '使用長靠尺與專用抹子上下抽平', '嚴重變形需重新施作'],
+                    vi: ['Phải đánh dấu chữ thập, đặt mốc trước khi trát', 'Dùng thước dài và dụng cụ chuyên dụng', 'Biến dạng nghiêm trọng cần làm lại']
+                },
+                prevention: {
+                    zh: '精確放線、灰餅沖筋到位、使用專用工具',
+                    vi: 'Đánh dấu chính xác, đặt mốc đúng, dùng dụng cụ chuyên dụng'
+                }
+            },
+            'Sandy_surface': {
+                description: {
+                    zh: '牆面色澤不均、接槎明顯，表面鬆散易掉砂',
+                    vi: 'Màu tường không đều, nối rõ, bề mặt rời dễ rơi cát'
+                },
+                causes: {
+                    zh: '養護不足失水過快、使用過時灰、壓光時間不當',
+                    vi: 'Bảo dưỡng không đủ mất nước nhanh, dùng vữa cũ, đánh bóng không đúng lúc'
+                },
+                solutions: {
+                    zh: ['抹灰後 12 小時內開始噴水養護', '嚴禁使用超過 3 小時的「過時灰」', '選用上好牌高品質砂漿'],
+                    vi: ['Bắt đầu phun nước trong 12 giờ sau trát', 'Cấm dùng vữa quá 3 giờ', 'Chọn vữa Sunhow chất lượng cao']
+                },
+                prevention: {
+                    zh: '壓光時機正確、充分養護、使用新鮮砂漿',
+                    vi: 'Đánh bóng đúng lúc, bảo dưỡng đủ, dùng vữa tươi'
+                }
+            }
+        };
+        
+        function tryLoadORT() {
+            const localScript = document.createElement('script');
+            localScript.src = './ort.min.js';
+            localScript.onload = () => { console.log('✅ 本地載入'); checkORT(); };
+            localScript.onerror = () => { console.log('嘗試 CDN'); tryLoadFromCDN(); };
+            document.head.appendChild(localScript);
+        }
+        
+        function tryLoadFromCDN() {
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/onnxruntime-web@1.19.2/dist/ort.min.js';
+            script.onload = () => { console.log('✅ CDN 載入'); checkORT(); };
+            script.onerror = () => { console.error('❌ 載入失敗'); showOfflineInstructions(); };
+            document.head.appendChild(script);
+        }
+        
+        function checkORT() {
+            if (typeof ort !== 'undefined') { console.log('✅ 準備就緒'); autoLoadModel(); }
+            else { setTimeout(checkORT, 100); }
+        }
+        
+        function showOfflineInstructions() {
+            document.getElementById('app').innerHTML = `
+                <div class="card"><div class="warning">⚠️ ${t('cannotAutoLoad')}<br><small>請確保通過伺服器訪問</small></div>
+                <button class="btn" onclick="location.reload()">🔄 ${currentLang === 'zh' ? '重新載入' : 'Tải lại'}</button></div>`;
+        }
+        
+        async function autoLoadModel() {
+            const app = document.getElementById('app');
+            app.innerHTML = `<div class="card card-highlight"><div class="loading">${t('loadingModel')}</div></div>`;
+            try {
+                const response = await fetch('best.onnx');
+                if (!response.ok) throw new Error('模型檔案不存在');
+                const arrayBuffer = await response.arrayBuffer();
+                session = await ort.InferenceSession.create(arrayBuffer);
+                console.log('✅ 模型載入成功');
+                showPhaseSelection();
+            } catch (err) {
+                console.error('載入失敗:', err);
+                showManualUpload();
+            }
+        }
+        
+        function showManualUpload() {
+            const app = document.getElementById('app');
+            app.innerHTML = `<div class="card"><div class="warning">⚠️ ${t('cannotAutoLoad')}</div>
+                <div class="step-title">${t('manualUpload')}</div>
+                <button class="btn" onclick="selectModel()">📤 ${t('selectModel')}</button>
+                <input type="file" id="modelInput" accept=".onnx" onchange="loadModel(this)"></div>`;
+        }
+        
+        function selectModel() { document.getElementById('modelInput').click(); }
+        
+        async function loadModel(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const app = document.getElementById('app');
+            app.innerHTML = `<div class="card card-highlight"><div class="loading">${t('loadingModel')}</div></div>`;
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                session = await ort.InferenceSession.create(arrayBuffer);
+                showPhaseSelection();
+            } catch (err) {
+                app.innerHTML = `<div class="card"><div class="warning">❌ ${currentLang === 'zh' ? '載入失敗' : 'Tải thất bại'}: ${err.message}</div>
+                    <button class="btn" onclick="showManualUpload()">🔄 ${currentLang === 'zh' ? '重試' : 'Thử lại'}</button></div>`;
+            }
+        }
+        
+        function showPhaseSelection() {
+            const app = document.getElementById('app');
+            let phasesHTML = '';
+            for (const [key, phase] of Object.entries(constructionPhases)) {
+                const risksHTML = phase.risks[currentLang].map(risk => 
+                    `<span class="risk-tag">${risk}</span>`
+                ).join('');
+                
+                phasesHTML += `<div class="phase-btn" onclick="selectPhase('${key}')">
+                    <div class="phase-title">${phase.name[currentLang]}</div>
+                    <div class="phase-desc">${phase.description[currentLang]}</div>
+                    <div class="phase-risks"><strong>${t('commonRisks')}</strong><br>${risksHTML}</div></div>`;
+            }
+            app.innerHTML = `<div class="success">✅ ${t('systemReady')}</div>
+                <div class="card card-highlight"><div class="step-title">${t('step1')}</div>
+                <div class="phase-selector">${phasesHTML}</div>
+                <button class="btn btn-outline" onclick="skipPhaseSelection()">⏭️ ${t('skip')}</button></div>`;
+        }
+        
+        function selectPhase(phaseKey) {
+            selectedPhase = phaseKey;
+            document.querySelectorAll('.phase-btn').forEach(btn => btn.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            setTimeout(() => showImageUpload(), 500);
+        }
+        
+        function skipPhaseSelection() { selectedPhase = null; showImageUpload(); }
+        
+        function showImageUpload() {
+            const app = document.getElementById('app');
+            let phaseWarning = '';
+            if (selectedPhase) {
+                const phase = constructionPhases[selectedPhase];
+                phaseWarning = `<div class="warning"><strong>⚠️ ${t('stageWarning')}</strong>${phase.risks[currentLang].join('、')}</div>`;
+            }
+            app.innerHTML = `<div class="success">✅ ${t('systemReady')}</div>${phaseWarning}
+                <div class="card card-highlight"><div class="step-title">${t('step2')}</div>
+                <button class="btn" onclick="selectImage()">📷 ${t('selectPhoto')}</button>
+                <input type="file" id="imageInput" accept="image/*" onchange="loadImage(this)">
+                <div class="info">💡 ${t('tip')}</div></div>`;
+        }
+        
+        function selectImage() { document.getElementById('imageInput').click(); }
+        
+        function loadImage(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) { currentImage = e.target.result; showImagePreview(); };
+            reader.readAsDataURL(file);
+        }
+        
+        function showImagePreview() {
+            const app = document.getElementById('app');
+            app.innerHTML = `<div class="success">✅ ${t('photoLoaded')}</div><div class="card"><img src="${currentImage}">
+                <button class="btn" onclick="runDetection()">🎯 ${t('startDetection')}</button>
+                <button class="btn btn-outline" onclick="showImageUpload()" style="margin-top: 10px;">📷 ${t('selectNewPhoto')}</button></div>`;
+        }
+        
+        async function runDetection() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = '⏳ ' + t('detecting');
+            try {
+                const img = new Image();
+                img.src = currentImage;
+                await new Promise(resolve => img.onload = resolve);
+                const input = await preprocessImage(img);
+                const feeds = {};
+                feeds[session.inputNames[0]] = input;
+                const results = await session.run(feeds);
+                const detections = postprocess(results[session.outputNames[0]], img.width, img.height);
+                showResults(img, detections);
+            } catch (err) {
+                console.error('檢測錯誤:', err);
+                document.getElementById('app').innerHTML = `<div class="card"><div class="warning">❌ ${currentLang === 'zh' ? '檢測失敗' : 'Kiểm tra thất bại'}: ${err.message}</div>
+                    <button class="btn" onclick="showImagePreview()">🔄 ${currentLang === 'zh' ? '重試' : 'Thử lại'}</button></div>`;
+            }
+        }
+        
+        async function preprocessImage(img) {
+            const canvas = document.createElement('canvas');
+            canvas.width = INPUT_SIZE;
+            canvas.height = INPUT_SIZE;
+            const ctx = canvas.getContext('2d');
+            const scale = Math.min(INPUT_SIZE / img.width, INPUT_SIZE / img.height);
+            const scaledWidth = img.width * scale;
+            const scaledHeight = img.height * scale;
+            const x = (INPUT_SIZE - scaledWidth) / 2;
+            const y = (INPUT_SIZE - scaledHeight) / 2;
+            ctx.fillStyle = '#114';
+            ctx.fillRect(0, 0, INPUT_SIZE, INPUT_SIZE);
+            ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+            const imageData = ctx.getImageData(0, 0, INPUT_SIZE, INPUT_SIZE);
+            const pixels = imageData.data;
+            const red = [], green = [], blue = [];
+            for (let i = 0; i < pixels.length; i += 4) {
+                red.push(pixels[i] / 255);
+                green.push(pixels[i + 1] / 255);
+                blue.push(pixels[i + 2] / 255);
+            }
+            const input = Float32Array.from([...red, ...green, ...blue]);
+            return new ort.Tensor('float32', input, [1, 3, INPUT_SIZE, INPUT_SIZE]);
+        }
+        
+        function postprocess(output, imgWidth, imgHeight) {
+            const data = output.data;
+            const dims = output.dims;
+            const numClasses = classNames.length;
+            const numBoxes = dims[2] || dims[1];
+            const boxes = [];
+            const scale = Math.min(INPUT_SIZE / imgWidth, INPUT_SIZE / imgHeight);
+            for (let i = 0; i < numBoxes; i++) {
+                let maxScore = 0;
+                let maxClass = 0;
+                for (let c = 0; c < numClasses; c++) {
+                    const score = data[i + (4 + c) * numBoxes];
+                    if (score > maxScore) { maxScore = score; maxClass = c; }
+                }
+                if (maxScore < CONFIDENCE_THRESHOLD) continue;
+                const x = data[i];
+                const y = data[i + numBoxes];
+                const w = data[i + 2 * numBoxes];
+                const h = data[i + 3 * numBoxes];
+                const x1 = ((x - w / 2) - (INPUT_SIZE - imgWidth * scale) / 2) / scale;
+                const y1 = ((y - h / 2) - (INPUT_SIZE - imgHeight * scale) / 2) / scale;
+                const x2 = ((x + w / 2) - (INPUT_SIZE - imgWidth * scale) / 2) / scale;
+                const y2 = ((y + h / 2) - (INPUT_SIZE - imgHeight * scale) / 2) / scale;
+                boxes.push({
+                    x1, y1, x2, y2, score: maxScore, class: maxClass,
+                    className: classNames[maxClass], 
+                    chineseName: classNamesChinese[classNames[maxClass]],
+                    vietnameseName: classNamesVietnamese[classNames[maxClass]]
+                });
+            }
+            return nms(boxes, IOU_THRESHOLD);
+        }
+        
+        function nms(boxes, iouThreshold) {
+            boxes.sort((a, b) => b.score - a.score);
+            const keep = [];
+            while (boxes.length > 0) {
+                keep.push(boxes[0]);
+                boxes = boxes.slice(1).filter(box => {
+                    const iou = calculateIOU(keep[keep.length - 1], box);
+                    return iou < iouThreshold;
+                });
+            }
+            return keep;
+        }
+        
+        function calculateIOU(box1, box2) {
+            const x1 = Math.max(box1.x1, box2.x1);
+            const y1 = Math.max(box1.y1, box2.y1);
+            const x2 = Math.min(box1.x2, box2.x2);
+            const y2 = Math.min(box1.y2, box2.y2);
+            const intersection = Math.max(0, x2 - x1) * Math.max(0, y2 - y1);
+            const area1 = (box1.x2 - box1.x1) * (box1.y2 - box1.y1);
+            const area2 = (box2.x2 - box2.x1) * (box2.y2 - box2.y1);
+            const union = area1 + area2 - intersection;
+            return intersection / union;
+        }
+        
+        function showResults(img, detections) {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            const colors = ['#ED1C24', '#2b2b2b', '#f39c12', '#4CAF50', '#9b59b6'];
+            detections.forEach((det) => {
+                const color = colors[det.class % colors.length];
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 4;
+                ctx.strokeRect(det.x1, det.y1, det.x2 - det.x1, det.y2 - det.y1);
+                ctx.fillStyle = color;
+                const defectName = currentLang === 'zh' ? det.chineseName : det.vietnameseName;
+                const label = `${defectName} ${(det.score * 100).toFixed(1)}%`;
+                ctx.font = 'bold 20px Arial';
+                const textWidth = ctx.measureText(label).width;
+                ctx.fillRect(det.x1, det.y1 - 35, textWidth + 20, 35);
+                ctx.fillStyle = 'white';
+                ctx.fillText(label, det.x1 + 10, det.y1 - 10);
+            });
+            const resultHTML = detections.map(det => {
+                const advice = expertAdvice[det.className] || { 
+                    description: { zh: '缺陷描述暫無', vi: 'Chưa có mô tả' },
+                    causes: { zh: '原因分析中', vi: 'Đang phân tích' },
+                    solutions: { zh: ['請諮詢專業人員'], vi: ['Tham khảo chuyên gia'] },
+                    prevention: { zh: '預防措施待補充', vi: 'Cần bổ sung biện pháp' }
+                };
+                const defectName = currentLang === 'zh' ? det.chineseName : det.vietnameseName;
+                return `<div class="result-item"><div class="defect-header">
+                    <div class="defect-name">${defectName}</div>
+                    <span class="badge">${t('confidence')}: ${(det.score * 100).toFixed(1)}%</span></div>
+                    <div class="defect-info">
+                        <div class="defect-section"><div class="defect-section-title">🔍 ${t('defectDescription')}</div>${advice.description[currentLang]}</div>
+                        <div class="defect-section"><div class="defect-section-title">⚠️ ${t('possibleCauses')}</div>${advice.causes[currentLang]}</div>
+                        <div class="defect-section"><div class="defect-section-title">✅ ${t('repairSuggestions')}</div>
+                            ${advice.solutions[currentLang].map((s, i) => `${i + 1}. ${s}`).join('<br>')}</div>
+                        <div class="defect-section"><div class="defect-section-title">🛡️ ${t('preventiveMeasures')}</div>${advice.prevention[currentLang]}</div>
+                    </div></div>`;
+            }).join('');
+            const app = document.getElementById('app');
+            app.innerHTML = `<div class="success">✅ ${t('detectionComplete')} ${detections.length} ${t('defects')}</div>
+                <div class="card"><canvas id="resultCanvas" width="${canvas.width}" height="${canvas.height}"></canvas></div>
+                ${detections.length > 0 ? `<div class="card"><div class="step-title">${t('resultAndAdvice')}</div>${resultHTML}</div>` : 
+                `<div class="card"><div class="success">✅ ${t('noDefects')}</div></div>`}
+                <div class="card"><button class="btn" onclick="showImageUpload()">📷 ${t('newDetection')}</button>
+                <button class="btn btn-black" onclick="showPhaseSelection()" style="margin-top: 10px;">🔄 ${t('reselectStage')}</button></div>`;
+            const displayCanvas = document.getElementById('resultCanvas');
+            displayCanvas.getContext('2d').drawImage(canvas, 0, 0);
+        }
+        
+        window.addEventListener('load', function() {
+            console.log('上好牌智能檢測系統啟動...');
+            tryLoadORT();
+        });
+    </script>
+</body>
+</html>
