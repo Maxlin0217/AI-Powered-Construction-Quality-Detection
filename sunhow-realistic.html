@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="上好牌砂漿 AI 智能施工質量檢測系統">
+    <meta name="theme-color" content="#ED1C24">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>上好牌施工智能檢測</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft JhengHei", "微軟正黑體", Arial, sans-serif;
+        }
+        
+        body {
+            background: #e8e8e8;
+            min-height: 100vh;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        
+        /* 包裝袋主容器 - 模擬立體袋子 */
+        .package-container {
+            max-width: 500px;
+            margin: 20px auto;
+            background: white;
+            position: relative;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.3),
+                inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        /* 包裝袋頂部封口效果 */
+        .package-top {
+            background: linear-gradient(to bottom, #f5f5f5 0%, white 100%);
+            padding: 15px 20px 10px;
+            position: relative;
+            border-bottom: 2px solid #ddd;
+        }
+        
+        .package-top::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: repeating-linear-gradient(
+                90deg,
+                #ddd 0px,
+                #ddd 10px,
+                transparent 10px,
+                transparent 20px
+            );
+        }
+        
+        /* 頂部紅色標語 - 模擬印刷 - 毛筆書法字體 */
+        .top-slogan {
+            text-align: right;
+            color: #ED1C24;
+            font-size: 20px;
+            font-weight: 900;
+            letter-spacing: 5px;
+            transform: rotate(-2deg);
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            font-family: "DFKai-SB", "標楷體", "BiauKai", "Kaiti TC", "KaiTi", "楷体", cursive, serif;
+        }
+        
+        /* 導航按鈕 - 置於頂部固定位置 */
+        .nav-overlay {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px;
+            border-radius: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .nav-btn {
+            background: white;
+            border: 2px solid #ED1C24;
+            color: #ED1C24;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .nav-btn:hover {
+            background: #ED1C24;
+            color: white;
+        }
+        
+        /* 主要Logo區域 - 改為白色背景 */
+        .brand-section {
+            background: white;
+            padding: 40px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* 左上角裝飾圖案 - 隱藏 */
+        .corner-logo {
+            display: none;
+        }
+        
+        /* 中央白色Logo框 - 精確還原 */
+        .brand-box {
+            background: white;
+            margin: 0 auto;
+            max-width: 320px;
+            border-radius: 3px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .brand-chinese {
+            font-size: 56px;
+            font-weight: 900;
+            color: white;
+            letter-spacing: 8px;
+            line-height: 1;
+            margin: 0;
+            padding: 35px 20px 20px;
+            background: #ED1C24;
+        }
+        
+        .brand-divider {
+            width: 100%;
+            height: 4px;
+            background: #ED1C24;
+            margin: 0;
+        }
+        
+        .brand-english {
+            font-size: 32px;
+            font-weight: bold;
+            color: #1a1a1a;
+            letter-spacing: 10px;
+            line-height: 1;
+            margin: 0;
+            padding: 20px 20px 30px;
+            background: white;
+        }
+        
+        /* 側邊條紋 - 適應白色背景 */
+        .side-stripe-left,
+        .side-stripe-right {
+            position: absolute;
+            top: 0;
+            width: 25px;
+            height: 100%;
+            background: linear-gradient(to right, 
+                rgba(0, 0, 0, 0.05) 0%,
+                transparent 50%,
+                rgba(0, 0, 0, 0.02) 100%
+            );
+        }
+        
+        .side-stripe-left {
+            left: 0;
+        }
+        
+        .side-stripe-right {
+            right: 0;
+            background: linear-gradient(to left, 
+                rgba(0, 0, 0, 0.05) 0%,
+                transparent 50%,
+                rgba(0, 0, 0, 0.02) 100%
+            );
+        }
+        
+        /* 黑色產品名稱區 - 精確還原 */
+        .product-name-section {
+            background: #2b2b2b;
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .product-main-title {
+            font-size: 36px;
+            font-weight: 900;
+            color: white;
+            letter-spacing: 12px;
+            margin-bottom: 8px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .product-sub-title {
+            font-size: 22px;
+            font-weight: bold;
+            color: white;
+            letter-spacing: 6px;
+            opacity: 0.95;
+        }
+        
+        /* 產品規格區 - 模擬包裝袋底部白色區域 */
+        .specs-section {
+            background: white;
+            padding: 30px 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+        }
+        
+        .specs-main {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .specs-weight {
+            font-size: 28px;
+            font-weight: 900;
+            color: #1a1a1a;
+            margin: 8px 0;
+        }
+        
+        .specs-cert {
+            font-size: 13px;
+            color: #666;
+            line-height: 2;
+            margin-top: 5px;
+        }
+        
+        /* 產品照片展示 */
+        .product-display {
+            background: linear-gradient(135deg, #f9f9f9 0%, #e8e8e8 100%);
+            padding: 40px 20px;
+            text-align: center;
+        }
+        
+        .product-image {
+            max-width: 180px;
+            height: auto;
+            filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.3));
+            transition: transform 0.3s;
+        }
+        
+        .product-image:hover {
+            transform: scale(1.05) rotate(2deg);
+        }
+        
+        /* 內容區域 */
+        .content-area {
+            padding: 30px 20px;
+            background: white;
+        }
+        
+        .card {
+            background: #fafafa;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .card-highlight {
+            border-color: #ED1C24;
+            border-width: 3px;
+            background: white;
+        }
+        
+        .phase-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .phase-btn {
+            background: white;
+            border: 2px solid #ED1C24;
+            padding: 18px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .phase-btn:hover {
+            background: #fff5f5;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(237, 28, 36, 0.25);
+        }
+        
+        .phase-btn.selected {
+            background: #ED1C24;
+            color: white;
+            box-shadow: 0 6px 20px rgba(237, 28, 36, 0.4);
+        }
+        
+        .phase-title {
+            font-size: 17px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .phase-desc {
+            font-size: 13px;
+            line-height: 1.4;
+            opacity: 0.85;
+        }
+        
+        .phase-risks {
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            font-size: 12px;
+        }
+        
+        .phase-btn.selected .phase-risks {
+            border-top-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .risk-tag {
+            display: inline-block;
+            background: #2b2b2b;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 3px;
+            margin: 3px;
+            font-size: 11px;
+        }
+        
+        .phase-btn.selected .risk-tag {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn {
+            background: #ED1C24;
+            color: white;
+            border: none;
+            padding: 18px 35px;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+        
+        .btn:hover { 
+            background: #c71820;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(237, 28, 36, 0.4);
+        }
+        
+        .btn:disabled {
+            background: #999;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        .btn-black {
+            background: #2b2b2b;
+        }
+        
+        .btn-black:hover {
+            background: #1a1a1a;
+        }
+        
+        .btn-outline {
+            background: white;
+            color: #ED1C24;
+            border: 3px solid #ED1C24;
+        }
+        
+        .btn-outline:hover {
+            background: #ED1C24;
+            color: white;
+        }
+        
+        .success {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 18px 25px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+        
+        .warning {
+            background: linear-gradient(135deg, #FFC107, #ffb300);
+            color: #333;
+            padding: 18px 25px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+        }
+        
+        .info {
+            background: #f5f5f5;
+            border-left: 5px solid #ED1C24;
+            padding: 18px 25px;
+            margin-top: 20px;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+        
+        .step-title {
+            font-size: 26px;
+            font-weight: 900;
+            margin-bottom: 20px;
+            color: #ED1C24;
+            letter-spacing: 3px;
+            border-left: 6px solid #ED1C24;
+            padding-left: 18px;
+        }
+        
+        img, canvas {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 3px solid #e0e0e0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .result-item {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 6px solid #ED1C24;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+        
+        .defect-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .defect-name {
+            font-size: 24px;
+            font-weight: 900;
+            color: #ED1C24;
+            letter-spacing: 2px;
+        }
+        
+        .badge {
+            background: #2b2b2b;
+            color: white;
+            padding: 8px 18px;
+            border-radius: 5px;
+            font-size: 15px;
+            font-weight: bold;
+        }
+        
+        .defect-info {
+            background: #fafafa;
+            padding: 25px;
+            border-radius: 8px;
+            margin-top: 15px;
+            line-height: 1.9;
+            border: 2px solid #f0f0f0;
+        }
+        
+        .defect-section {
+            margin-top: 18px;
+        }
+        
+        .defect-section-title {
+            color: #ED1C24;
+            font-weight: 900;
+            margin-bottom: 10px;
+            font-size: 17px;
+            letter-spacing: 1px;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        /* 底部包裝封口效果 */
+        .package-bottom {
+            background: linear-gradient(to top, #f5f5f5 0%, white 100%);
+            padding: 20px;
+            border-top: 2px solid #ddd;
+            position: relative;
+        }
+        
+        .package-bottom::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: repeating-linear-gradient(
+                90deg,
+                #ddd 0px,
+                #ddd 10px,
+                transparent 10px,
+                transparent 20px
+            );
+        }
+        
+        /* Loading 動畫 */
+        .loading {
+            text-align: center;
+            padding: 50px 20px;
+            color: #ED1C24;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .loading::after {
+            content: "⏳";
+            font-size: 56px;
+            display: block;
+            margin-top: 20px;
+            animation: spin 2s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .package-container {
+                margin: 10px;
+                border-radius: 5px;
+            }
+            
+            .nav-overlay {
+                flex-direction: column;
+                gap: 5px;
+                padding: 8px;
+            }
+            
+            .nav-btn {
+                font-size: 12px;
+                padding: 6px 15px;
+            }
+            
+            .brand-chinese {
+                font-size: 46px;
+                letter-spacing: 6px;
+            }
+            
+            .brand-english {
+                font-size: 26px;
+                letter-spacing: 8px;
+            }
+            
+            .product-main-title {
+                font-size: 28px;
+                letter-spacing: 8px;
+            }
+            
+            .product-sub-title {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 浮動導航按鈕 -->
+    <div class="nav-overlay">
+        <a href="index.html" class="nav-btn">🏠 首頁</a>
+        <a href="https://www.mfgroup.com.tw/product.php?lang=tw&tb=3" class="nav-btn" target="_blank">🌐 官網</a>
+    </div>
+    
+    <!-- 包裝袋主容器 -->
+    <div class="package-container">
+        <!-- 包裝袋頂部封口 -->
+        <div class="package-top">
+            <div class="top-slogan">上好厝用上好料</div>
+        </div>
+        
+        <!-- 主要紅色品牌區 -->
+        <div class="brand-section">
+            <!-- 左上角裝飾 -->
+            <div class="corner-logo">上</div>
+            
+            <!-- 側邊條紋效果 -->
+            <div class="side-stripe-left"></div>
+            <div class="side-stripe-right"></div>
+            
+            <!-- 中央白色Logo框 -->
+            <div class="brand-box">
+                <div class="brand-chinese">上好牌</div>
+                <div class="brand-divider"></div>
+                <div class="brand-english">SUNHOW</div>
+            </div>
+        </div>
+        
+        <!-- 黑色產品名稱區 -->
+        <div class="product-name-section">
+            <div class="product-main-title">施工智能檢測</div>
+            <div class="product-sub-title">AI DETECTION</div>
+        </div>
+        
+        <!-- 產品規格區 -->
+        <div class="specs-section">
+            <div class="specs-cert">
+                ISO 9001認證<br>
+                CNS認證產品<br>
+                乾拌砂漿專業製造
+            </div>
+        </div>
+        
+        <!-- 產品展示 -->
+        <div class="product-display">
+            <img src="product.jpg" alt="上好牌砂漿" class="product-image">
+        </div>
+        
+        <!-- 內容區域 -->
+        <div class="content-area">
+            <div id="app">
+                <div class="card card-highlight">
+                    <div class="loading">
+                        系統啟動中
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 包裝袋底部封口 -->
+        <div class="package-bottom">
+            <div style="text-align: center; color: #666; font-size: 13px; line-height: 1.8;">
+                <strong style="color: #ED1C24; font-size: 16px;">上好牌 SUNHOW</strong><br>
+                品質保證 · 值得信賴<br>
+                施工智能檢測系統
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let session = null;
+        let currentImage = null;
+        let selectedPhase = null;
+        
+        const INPUT_SIZE = 640;
+        const CONFIDENCE_THRESHOLD = 0.25;
+        const IOU_THRESHOLD = 0.45;
+        
+        const classNames = [
+            'Crack', 'Efflorescence', 'Rebar', 'Rust', 'Scaling', 'Spall', 'Spallingw',
+            'Hollowing', 'Bad_corner', 'Sandy_surface', 'Honeycomb'
+        ];
+        
+        const classNamesChinese = {
+            'Crack': '裂縫',
+            'Efflorescence': '白華',
+            'Rebar': '鋼筋外露',
+            'Rust': '鏽蝕',
+            'Scaling': '剝落',
+            'Spall': '剝離',
+            'Spallingw': '剝離W型',
+            'Hollowing': '空鼓',
+            'Bad_corner': '陰陽角不順直',
+            'Sandy_surface': '表面粗糙/起砂',
+            'Honeycomb': '蜂窩'
+        };
+        
+        const constructionPhases = {
+            'base': { name: '基層處理', description: '清理基層、澆水濕潤、塗刷界面劑', risks: ['空鼓', '剝離'] },
+            'datum': { name: '吊垂線、做灰餅', description: '彈線定位、設置灰餅、設置沖筋', risks: ['陰陽角不順直'] },
+            'corner': { name: '護角施工', description: '安裝護角條、加設加強網', risks: ['裂縫', '陰陽角不順直'] },
+            'base_plaster': { name: '底層抹灰', description: '甩漿、抹底灰（5-7mm）', risks: ['空鼓', '裂縫'] },
+            'middle_plaster': { name: '中層抹灰', description: '抹中層（8-10mm）、搓平', risks: ['裂縫', '表面粗糙'] },
+            'finish_plaster': { name: '面層抹灰', description: '抹面層（2-3mm）、壓光', risks: ['表面粗糙/起砂', '白華'] },
+            'curing': { name: '養護階段', description: '噴水養護，持續 ≥ 7 天', risks: ['裂縫', '起砂'] },
+            'final': { name: '成品驗收', description: '全面檢查質量', risks: ['所有缺陷類型'] }
+        };
+        
+        const expertAdvice = {
+            'Crack': {
+                description: '表面細小或明顯的裂縫，可能為乾縮裂縫或結構裂縫',
+                causes: '砂漿配比水泥過多、抹灰太厚未分層、異質材料交接處未加強',
+                solutions: ['牆根、交接處加設 300mm 寬加強網', '嚴格執行分層抹灰，單層厚度 < 9mm', '使用上好牌專業砂漿'],
+                prevention: '交接處掛網、嚴格控制厚度、充分養護'
+            },
+            'Hollowing': {
+                description: '牆面局部鼓起、龜裂，嚴重時出現塊狀脫落',
+                causes: '基層清理不淨、未提前澆水濕潤、甩漿強度不足',
+                solutions: ['敲除空鼓區域，徹底清理基層', '刷一道含建築膠的素水泥漿', '使用上好牌砂漿重新分層抹灰'],
+                prevention: '基層清理徹底、澆水充分、甩漿到位'
+            },
+            'Bad_corner': {
+                description: '牆角邊線不直、歪斜，用方尺檢查不方正',
+                causes: '未做灰餅、沖筋找規矩、未使用專用陰陽角抹子',
+                solutions: ['抹灰前必須彈十字線、做灰餅', '使用長靠尺與專用抹子上下抽平', '嚴重變形需重新施作'],
+                prevention: '精確放線、灰餅沖筋到位、使用專用工具'
+            },
+            'Sandy_surface': {
+                description: '牆面色澤不均、接槎明顯，表面鬆散易掉砂',
+                causes: '養護不足失水過快、使用過時灰、壓光時間不當',
+                solutions: ['抹灰後 12 小時內開始噴水養護', '嚴禁使用超過 3 小時的「過時灰」', '選用上好牌高品質砂漿'],
+                prevention: '壓光時機正確、充分養護、使用新鮮砂漿'
+            },
+            'Efflorescence': {
+                description: '牆面出現白色結晶物（鹽析現象）',
+                causes: '水泥或砂中含可溶性鹽類、養護期過度潮濕',
+                solutions: ['用稀鹽酸清洗並充分沖水', '選用上好牌低鹼水泥砂漿', '加強防水措施'],
+                prevention: '選用低鹼水泥、控制養護濕度、做好防水'
+            },
+            'Rebar': {
+                description: '鋼筋外露，保護層不足',
+                causes: '保護層厚度不足、混凝土剝落',
+                solutions: ['清理鏽蝕，塗刷防鏽劑', '使用高強度修補砂漿修復', '嚴重時需結構補強'],
+                prevention: '確保保護層厚度、做好防水'
+            },
+            'Rust': {
+                description: '鋼筋鏽蝕，表面出現鏽斑',
+                causes: '保護層破損、長期潮濕環境',
+                solutions: ['清除鏽蝕至金屬光澤', '塗刷防鏽底漆', '修復保護層並防水'],
+                prevention: '保護層完整、防水到位、定期檢查'
+            },
+            'Scaling': {
+                description: '表面層狀剝落',
+                causes: '基層處理不當、材料配比問題',
+                solutions: ['清除剝落部位', '重新施作並加強養護', '使用上好牌專業砂漿'],
+                prevention: '基層處理到位、選用優質材料'
+            },
+            'Spall': {
+                description: '混凝土塊狀剝離',
+                causes: '凍融損害、鋼筋鏽脹、衝擊損傷',
+                solutions: ['評估結構安全', '使用聚合物砂漿修補', '必要時進行結構補強'],
+                prevention: '防凍融、防鏽蝕、避免衝擊'
+            },
+            'Spallingw': {
+                description: 'W型剝離破損',
+                causes: '應力集中、材料劣化',
+                solutions: ['專業結構評估', '按規範進行修復', '監測後續發展'],
+                prevention: '結構設計合理、材料品質優良'
+            },
+            'Honeycomb': {
+                description: '表面呈現蜂窩狀孔洞',
+                causes: '振搗不實、漏振、配比不當',
+                solutions: ['評估深度和範圍', '使用高流動性修補料填充', '嚴重時需鑿除重做'],
+                prevention: '充分振搗、配比準確、施工規範'
+            }
+        };
+        
+        function tryLoadORT() {
+            const localScript = document.createElement('script');
+            localScript.src = './ort.min.js';
+            localScript.onload = () => { console.log('✅ 本地載入'); checkORT(); };
+            localScript.onerror = () => { console.log('嘗試 CDN'); tryLoadFromCDN(); };
+            document.head.appendChild(localScript);
+        }
+        
+        function tryLoadFromCDN() {
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/onnxruntime-web@1.19.2/dist/ort.min.js';
+            script.onload = () => { console.log('✅ CDN 載入'); checkORT(); };
+            script.onerror = () => { console.error('❌ 載入失敗'); showOfflineInstructions(); };
+            document.head.appendChild(script);
+        }
+        
+        function checkORT() {
+            if (typeof ort !== 'undefined') { console.log('✅ 準備就緒'); autoLoadModel(); }
+            else { setTimeout(checkORT, 100); }
+        }
+        
+        function showOfflineInstructions() {
+            document.getElementById('app').innerHTML = `
+                <div class="card"><div class="warning">⚠️ 無法載入系統<br><small>請確保通過伺服器訪問</small></div>
+                <button class="btn" onclick="location.reload()">🔄 重新載入</button></div>`;
+        }
+        
+        async function autoLoadModel() {
+            const app = document.getElementById('app');
+            app.innerHTML = `<div class="card card-highlight"><div class="loading">載入 AI 模型中</div></div>`;
+            try {
+                const response = await fetch('best.onnx');
+                if (!response.ok) throw new Error('模型檔案不存在');
+                const arrayBuffer = await response.arrayBuffer();
+                session = await ort.InferenceSession.create(arrayBuffer);
+                console.log('✅ 模型載入成功');
+                showPhaseSelection();
+            } catch (err) {
+                console.error('載入失敗:', err);
+                showManualUpload();
+            }
+        }
+        
+        function showManualUpload() {
+            const app = document.getElementById('app');
+            app.innerHTML = `<div class="card"><div class="warning">⚠️ 無法自動載入模型</div>
+                <div class="step-title">手動上傳模型</div>
+                <button class="btn" onclick="selectModel()">📤 選擇 best.onnx</button>
+                <input type="file" id="modelInput" accept=".onnx" onchange="loadModel(this)"></div>`;
+        }
+        
+        function selectModel() { document.getElementById('modelInput').click(); }
+        
+        async function loadModel(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const app = document.getElementById('app');
+            app.innerHTML = `<div class="card card-highlight"><div class="loading">載入中</div></div>`;
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                session = await ort.InferenceSession.create(arrayBuffer);
+                showPhaseSelection();
+            } catch (err) {
+                app.innerHTML = `<div class="card"><div class="warning">❌ 載入失敗：${err.message}</div>
+                    <button class="btn" onclick="showManualUpload()">🔄 重試</button></div>`;
+            }
+        }
+        
+        function showPhaseSelection() {
+            const app = document.getElementById('app');
+            let phasesHTML = '';
+            for (const [key, phase] of Object.entries(constructionPhases)) {
+                const risksHTML = phase.risks.map(risk => `<span class="risk-tag">${risk}</span>`).join('');
+                phasesHTML += `<div class="phase-btn" onclick="selectPhase('${key}')">
+                    <div class="phase-title">${phase.name}</div>
+                    <div class="phase-desc">${phase.description}</div>
+                    <div class="phase-risks"><strong>常見風險：</strong><br>${risksHTML}</div></div>`;
+            }
+            app.innerHTML = `<div class="success">✅ 系統已就緒</div>
+                <div class="card card-highlight"><div class="step-title">步驟 1：選擇施工階段</div>
+                <div class="phase-selector">${phasesHTML}</div>
+                <button class="btn btn-outline" onclick="skipPhaseSelection()">⏭️ 跳過（通用檢測）</button></div>`;
+        }
+        
+        function selectPhase(phaseKey) {
+            selectedPhase = phaseKey;
+            document.querySelectorAll('.phase-btn').forEach(btn => btn.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            setTimeout(() => showImageUpload(), 500);
+        }
+        
+        function skipPhaseSelection() { selectedPhase = null; showImageUpload(); }
+        
+        function showImageUpload() {
+            const app = document.getElementById('app');
+            let phaseWarning = '';
+            if (selectedPhase) {
+                const phase = constructionPhases[selectedPhase];
+                phaseWarning = `<div class="warning"><strong>⚠️ 本階段重點檢測：</strong>${phase.risks.join('、')}</div>`;
+            }
+            app.innerHTML = `<div class="success">✅ 準備就緒</div>${phaseWarning}
+                <div class="card card-highlight"><div class="step-title">步驟 2：上傳照片</div>
+                <button class="btn" onclick="selectImage()">📷 選擇照片</button>
+                <input type="file" id="imageInput" accept="image/*" onchange="loadImage(this)">
+                <div class="info">💡 建議：使用清晰照片，確保缺陷部位清楚可見</div></div>`;
+        }
+        
+        function selectImage() { document.getElementById('imageInput').click(); }
+        
+        function loadImage(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) { currentImage = e.target.result; showImagePreview(); };
+            reader.readAsDataURL(file);
+        }
+        
+        function showImagePreview() {
+            const app = document.getElementById('app');
+            app.innerHTML = `<div class="success">✅ 照片已載入</div><div class="card"><img src="${currentImage}">
+                <button class="btn" onclick="runDetection()">🎯 開始檢測</button>
+                <button class="btn btn-outline" onclick="showImageUpload()" style="margin-top: 10px;">📷 重選照片</button></div>`;
+        }
+        
+        async function runDetection() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = '⏳ 檢測中...';
+            try {
+                const img = new Image();
+                img.src = currentImage;
+                await new Promise(resolve => img.onload = resolve);
+                const input = await preprocessImage(img);
+                const feeds = {};
+                feeds[session.inputNames[0]] = input;
+                const results = await session.run(feeds);
+                const detections = postprocess(results[session.outputNames[0]], img.width, img.height);
+                showResults(img, detections);
+            } catch (err) {
+                console.error('檢測錯誤:', err);
+                document.getElementById('app').innerHTML = `<div class="card"><div class="warning">❌ 檢測失敗：${err.message}</div>
+                    <button class="btn" onclick="showImagePreview()">🔄 重試</button></div>`;
+            }
+        }
+        
+        async function preprocessImage(img) {
+            const canvas = document.createElement('canvas');
+            canvas.width = INPUT_SIZE;
+            canvas.height = INPUT_SIZE;
+            const ctx = canvas.getContext('2d');
+            const scale = Math.min(INPUT_SIZE / img.width, INPUT_SIZE / img.height);
+            const scaledWidth = img.width * scale;
+            const scaledHeight = img.height * scale;
+            const x = (INPUT_SIZE - scaledWidth) / 2;
+            const y = (INPUT_SIZE - scaledHeight) / 2;
+            ctx.fillStyle = '#114';
+            ctx.fillRect(0, 0, INPUT_SIZE, INPUT_SIZE);
+            ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+            const imageData = ctx.getImageData(0, 0, INPUT_SIZE, INPUT_SIZE);
+            const pixels = imageData.data;
+            const red = [], green = [], blue = [];
+            for (let i = 0; i < pixels.length; i += 4) {
+                red.push(pixels[i] / 255);
+                green.push(pixels[i + 1] / 255);
+                blue.push(pixels[i + 2] / 255);
+            }
+            const input = Float32Array.from([...red, ...green, ...blue]);
+            return new ort.Tensor('float32', input, [1, 3, INPUT_SIZE, INPUT_SIZE]);
+        }
+        
+        function postprocess(output, imgWidth, imgHeight) {
+            const data = output.data;
+            const dims = output.dims;
+            const numClasses = classNames.length;
+            const numBoxes = dims[2] || dims[1];
+            const boxes = [];
+            const scale = Math.min(INPUT_SIZE / imgWidth, INPUT_SIZE / imgHeight);
+            for (let i = 0; i < numBoxes; i++) {
+                let maxScore = 0;
+                let maxClass = 0;
+                for (let c = 0; c < numClasses; c++) {
+                    const score = data[i + (4 + c) * numBoxes];
+                    if (score > maxScore) { maxScore = score; maxClass = c; }
+                }
+                if (maxScore < CONFIDENCE_THRESHOLD) continue;
+                const x = data[i];
+                const y = data[i + numBoxes];
+                const w = data[i + 2 * numBoxes];
+                const h = data[i + 3 * numBoxes];
+                const x1 = ((x - w / 2) - (INPUT_SIZE - imgWidth * scale) / 2) / scale;
+                const y1 = ((y - h / 2) - (INPUT_SIZE - imgHeight * scale) / 2) / scale;
+                const x2 = ((x + w / 2) - (INPUT_SIZE - imgWidth * scale) / 2) / scale;
+                const y2 = ((y + h / 2) - (INPUT_SIZE - imgHeight * scale) / 2) / scale;
+                boxes.push({
+                    x1, y1, x2, y2, score: maxScore, class: maxClass,
+                    className: classNames[maxClass], chineseName: classNamesChinese[classNames[maxClass]]
+                });
+            }
+            return nms(boxes, IOU_THRESHOLD);
+        }
+        
+        function nms(boxes, iouThreshold) {
+            boxes.sort((a, b) => b.score - a.score);
+            const keep = [];
+            while (boxes.length > 0) {
+                keep.push(boxes[0]);
+                boxes = boxes.slice(1).filter(box => {
+                    const iou = calculateIOU(keep[keep.length - 1], box);
+                    return iou < iouThreshold;
+                });
+            }
+            return keep;
+        }
+        
+        function calculateIOU(box1, box2) {
+            const x1 = Math.max(box1.x1, box2.x1);
+            const y1 = Math.max(box1.y1, box2.y1);
+            const x2 = Math.min(box1.x2, box2.x2);
+            const y2 = Math.min(box1.y2, box2.y2);
+            const intersection = Math.max(0, x2 - x1) * Math.max(0, y2 - y1);
+            const area1 = (box1.x2 - box1.x1) * (box1.y2 - box1.y1);
+            const area2 = (box2.x2 - box2.x1) * (box2.y2 - box2.y1);
+            const union = area1 + area2 - intersection;
+            return intersection / union;
+        }
+        
+        function showResults(img, detections) {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            const colors = ['#ED1C24', '#2b2b2b', '#f39c12', '#4CAF50', '#9b59b6'];
+            detections.forEach((det) => {
+                const color = colors[det.class % colors.length];
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 4;
+                ctx.strokeRect(det.x1, det.y1, det.x2 - det.x1, det.y2 - det.y1);
+                ctx.fillStyle = color;
+                const label = `${det.chineseName} ${(det.score * 100).toFixed(1)}%`;
+                ctx.font = 'bold 20px Arial';
+                const textWidth = ctx.measureText(label).width;
+                ctx.fillRect(det.x1, det.y1 - 35, textWidth + 20, 35);
+                ctx.fillStyle = 'white';
+                ctx.fillText(label, det.x1 + 10, det.y1 - 10);
+            });
+            const resultHTML = detections.map(det => {
+                const advice = expertAdvice[det.className] || { description: '缺陷描述暫無', causes: '原因分析中',
+                    solutions: ['請諮詢專業人員'], prevention: '預防措施待補充' };
+                return `<div class="result-item"><div class="defect-header">
+                    <div class="defect-name">${det.chineseName}</div>
+                    <span class="badge">${(det.score * 100).toFixed(1)}%</span></div>
+                    <div class="defect-info">
+                        <div class="defect-section"><div class="defect-section-title">🔍 缺陷描述</div>${advice.description}</div>
+                        <div class="defect-section"><div class="defect-section-title">⚠️ 可能原因</div>${advice.causes}</div>
+                        <div class="defect-section"><div class="defect-section-title">✅ 修復建議</div>
+                            ${advice.solutions.map((s, i) => `${i + 1}. ${s}`).join('<br>')}</div>
+                        <div class="defect-section"><div class="defect-section-title">🛡️ 預防措施</div>${advice.prevention}</div>
+                    </div></div>`;
+            }).join('');
+            const app = document.getElementById('app');
+            app.innerHTML = `<div class="success">✅ 檢測完成！發現 ${detections.length} 個缺陷</div>
+                <div class="card"><canvas id="resultCanvas" width="${canvas.width}" height="${canvas.height}"></canvas></div>
+                ${detections.length > 0 ? `<div class="card"><div class="step-title">檢測結果與專家建議</div>${resultHTML}</div>` : 
+                '<div class="card"><div class="success">✅ 未檢測到缺陷，施工質量良好</div></div>'}
+                <div class="card"><button class="btn" onclick="showImageUpload()">📷 檢測新照片</button>
+                <button class="btn btn-black" onclick="showPhaseSelection()" style="margin-top: 10px;">🔄 重新選擇階段</button></div>`;
+            const displayCanvas = document.getElementById('resultCanvas');
+            displayCanvas.getContext('2d').drawImage(canvas, 0, 0);
+        }
+        
+        window.addEventListener('load', function() {
+            console.log('上好牌智能檢測系統啟動...');
+            tryLoadORT();
+        });
+    </script>
+</body>
+</html>
